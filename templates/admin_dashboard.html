@@ -1,0 +1,870 @@
+{% extends "base.html" %}
+{% block title %}InsiderShield - Security Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block body %}
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-sm">
+                <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                    <path d="M24 4L6 14v10c0 11.1 7.7 21.5 18 24 10.3-2.5 18-12.9 18-24V14L24 4z" fill="url(#sg2)"
+                        opacity="0.3" stroke="url(#sg2)" stroke-width="2" />
+                    <path d="M24 14l-8 4v6c0 5.5 3.4 10.6 8 12 4.6-1.4 8-6.5 8-12v-6l-8-4z" fill="url(#sg2)"
+                        opacity="0.7" />
+                    <defs>
+                        <linearGradient id="sg2" x1="6" y1="4" x2="42" y2="48">
+                            <stop stop-color="#06b6d4" />
+                            <stop offset="1" stop-color="#8b5cf6" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <span class="sidebar-title">InsiderShield</span>
+            <span class="admin-badge">ADMIN</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="overview">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-section="employees">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Employees</span>
+            </a>
+            <a href="#" class="nav-item" data-section="alerts">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span>Alerts</span>
+                <span class="nav-badge" id="alert-badge" style="display:none;">0</span>
+            </a>
+            <a href="#" class="nav-item" data-section="analytics">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" data-section="reports">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                <span>Reports</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar admin-avatar">🛡️</div>
+                <div class="user-details">
+                    <span class="user-name">{{ current_user.full_name }}</span>
+                    <span class="user-role">Security Operations</span>
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn" title="Logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menu-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <h2 class="page-title" id="page-title">Security Overview</h2>
+            </div>
+            <div class="topbar-right">
+                <button class="action-btn" id="run-analysis-btn" onclick="runAnalysis()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                    Run Analysis
+                </button>
+                <span class="status-badge online">● System Active</span>
+            </div>
+        </header>
+
+        <!-- Overview Section -->
+        <section class="content-section active" id="section-overview">
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card stat-employees">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="stat-employees">-</span>
+                        <span class="stat-label">Monitored Employees</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-activities">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="stat-activities">-</span>
+                        <span class="stat-label">Total Activities</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-alerts">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="stat-alerts">-</span>
+                        <span class="stat-label">Pending Alerts</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-risk">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-value" id="stat-avg-risk">-</span>
+                        <span class="stat-label">Avg Risk Score</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Risk Distribution</h3>
+                        <span class="chart-subtitle">Categorized threat levels</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="riskDistChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Employee Risk Scores</h3>
+                        <span class="chart-subtitle">Individual risk assessment</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="employeeRiskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee Risk Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>Employee Threat Assessment</h3>
+                    <span class="table-subtitle">Real-time risk scoring for all monitored employees</span>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="employee-risk-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Risk Score</th>
+                                <th>Classification</th>
+                                <th>Risk Level</th>
+                                <th>Last Analysis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="risk-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Employees Section -->
+        <section class="content-section" id="section-employees">
+            <div class="section-header">
+                <h3>Employee Monitoring</h3>
+                <p class="section-desc">Detailed view of all monitored employees and their behavioral patterns.</p>
+            </div>
+            <div class="employee-cards" id="employee-cards">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Alerts Section -->
+        <section class="content-section" id="section-alerts">
+            <div class="section-header">
+                <h3>Alert Management</h3>
+                <p class="section-desc">Real-time notifications triggered by ML threshold breaches.</p>
+            </div>
+            <div class="alerts-list" id="alerts-list">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section class="content-section" id="section-analytics">
+            <div class="section-header">
+                <h3>Behavioral Analytics</h3>
+                <p class="section-desc">Deep-dive analytics on user behavior patterns and threat metrics.</p>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Activity Timeline (24h)</h3>
+                        <span class="chart-subtitle">Hourly activity distribution</span>
+                    </div>
+                    <div class="chart-body chart-body-lg">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Action Type Distribution</h3>
+                        <span class="chart-subtitle">Breakdown by action category</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="actionTypeChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Risk Trend</h3>
+                        <span class="chart-subtitle">Risk score evolution over time</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="riskTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section class="content-section" id="section-reports">
+            <div class="section-header">
+                <h3>Security Reports</h3>
+                <p class="section-desc">Generate and view administrative security reports.</p>
+                <button class="action-btn" onclick="generateReport()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Generate Report
+                </button>
+            </div>
+            <div class="reports-list" id="reports-list">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ─── State ──────────────────────────────────────────────────────────────
+    let dashboardData = null;
+    let charts = {};
+
+    // ─── Navigation ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = item.dataset.section;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('section-' + section).classList.add('active');
+            document.getElementById('page-title').textContent = item.querySelector('span').textContent;
+
+            // Load section-specific data
+            if (section === 'alerts') loadAlerts();
+            if (section === 'analytics') loadAnalytics();
+            if (section === 'reports') loadReports();
+            if (section === 'employees') loadEmployeeCards();
+        });
+    });
+
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // ─── Dashboard Overview ─────────────────────────────────────────────────
+    function loadDashboard() {
+        fetch('/api/admin/overview')
+            .then(res => res.json())
+            .then(data => {
+                dashboardData = data;
+                updateStats(data);
+                updateRiskTable(data.employee_risks);
+                renderRiskDistChart(data.risk_distribution);
+                renderEmployeeRiskChart(data.employee_risks);
+                updateAlertBadge(data.pending_alerts);
+            })
+            .catch(err => console.error('Dashboard load error:', err));
+    }
+
+    function updateStats(data) {
+        animateValue('stat-employees', data.total_employees);
+        animateValue('stat-activities', data.total_activities);
+        animateValue('stat-alerts', data.pending_alerts);
+        document.getElementById('stat-avg-risk').textContent = data.average_risk + '%';
+    }
+
+    function animateValue(id, target) {
+        const el = document.getElementById(id);
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 30));
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = current;
+        }, 30);
+    }
+
+    function updateAlertBadge(count) {
+        const badge = document.getElementById('alert-badge');
+        if (count > 0) {
+            badge.style.display = 'inline-flex';
+            badge.textContent = count;
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function updateRiskTable(employees) {
+        const tbody = document.getElementById('risk-table-body');
+        tbody.innerHTML = employees.map(e => `
+            <tr class="risk-row risk-${e.risk_level}">
+                <td>
+                    <div class="table-user">
+                        <div class="table-avatar">${e.employee.full_name[0]}</div>
+                        <div>
+                            <div class="table-name">${e.employee.full_name}</div>
+                            <div class="table-id">${e.employee.employee_id}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${e.employee.department}</td>
+                <td>
+                    <div class="risk-score-cell">
+                        <div class="risk-bar-bg">
+                            <div class="risk-bar risk-bar-${e.risk_level}" style="width: ${e.risk_percentage}%"></div>
+                        </div>
+                        <span class="risk-value">${e.risk_percentage}%</span>
+                    </div>
+                </td>
+                <td><span class="classification-badge badge-${e.classification.toLowerCase()}">${e.classification}</span></td>
+                <td><span class="level-badge level-${e.risk_level}">${e.risk_level.toUpperCase()}</span></td>
+                <td>${e.last_analysis ? new Date(e.last_analysis).toLocaleString() : 'Not analyzed'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ─── Charts ─────────────────────────────────────────────────────────────
+    const chartColors = {
+        cyan: 'rgba(6, 182, 212, 1)',
+        cyanBg: 'rgba(6, 182, 212, 0.2)',
+        purple: 'rgba(139, 92, 246, 1)',
+        purpleBg: 'rgba(139, 92, 246, 0.2)',
+        red: 'rgba(239, 68, 68, 1)',
+        redBg: 'rgba(239, 68, 68, 0.2)',
+        amber: 'rgba(245, 158, 11, 1)',
+        amberBg: 'rgba(245, 158, 11, 0.2)',
+        green: 'rgba(34, 197, 94, 1)',
+        greenBg: 'rgba(34, 197, 94, 0.2)',
+        textMuted: 'rgba(148, 163, 184, 0.6)',
+        gridColor: 'rgba(148, 163, 184, 0.1)'
+    };
+
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = chartColors.gridColor;
+    Chart.defaults.font.family = 'Inter, sans-serif';
+
+    function renderRiskDistChart(dist) {
+        const ctx = document.getElementById('riskDistChart').getContext('2d');
+        if (charts.riskDist) charts.riskDist.destroy();
+
+        charts.riskDist = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                datasets: [{
+                    data: [dist.high, dist.medium, dist.low],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(34, 197, 94, 0.85)'
+                    ],
+                    borderColor: [
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(34, 197, 94, 1)'
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, usePointStyle: true, pointStyleWidth: 12 }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderEmployeeRiskChart(employees) {
+        const ctx = document.getElementById('employeeRiskChart').getContext('2d');
+        if (charts.empRisk) charts.empRisk.destroy();
+
+        const labels = employees.map(e => e.employee.full_name.split(' ')[0]);
+        const data = employees.map(e => e.risk_percentage);
+        const colors = employees.map(e => {
+            if (e.risk_level === 'high') return chartColors.red;
+            if (e.risk_level === 'medium') return chartColors.amber;
+            return chartColors.green;
+        });
+        const bgColors = employees.map(e => {
+            if (e.risk_level === 'high') return chartColors.redBg;
+            if (e.risk_level === 'medium') return chartColors.amberBg;
+            return chartColors.greenBg;
+        });
+
+        charts.empRisk = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Risk Score (%)',
+                    data: data,
+                    backgroundColor: bgColors,
+                    borderColor: colors,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: chartColors.gridColor }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // ─── Analytics ──────────────────────────────────────────────────────────
+    function loadAnalytics() {
+        fetch('/api/admin/activity_timeline')
+            .then(res => res.json())
+            .then(data => {
+                renderTimelineChart(data);
+            });
+
+        if (dashboardData) {
+            renderActionTypeChart();
+            renderRiskTrendChart();
+        }
+    }
+
+    function renderTimelineChart(data) {
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        if (charts.timeline) charts.timeline.destroy();
+
+        const hours = [];
+        for (let i = 0; i < 24; i++) {
+            hours.push(String(i).padStart(2, '0') + ':00');
+        }
+
+        const totals = hours.map(h => (data[h] && data[h].total) || 0);
+        const fileAccess = hours.map(h => (data[h] && data[h].file_access) || 0);
+        const downloads = hours.map(h => (data[h] && data[h].file_download) || 0);
+        const sensitive = hours.map(h => (data[h] && data[h].sensitive_file) || 0);
+
+        charts.timeline = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [
+                    {
+                        label: 'Total Activities',
+                        data: totals,
+                        borderColor: chartColors.cyan,
+                        backgroundColor: chartColors.cyanBg,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'File Access',
+                        data: fileAccess,
+                        borderColor: chartColors.purple,
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'Downloads',
+                        data: downloads,
+                        borderColor: chartColors.amber,
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        pointRadius: 2
+                    },
+                    {
+                        label: 'Sensitive Files',
+                        data: sensitive,
+                        borderColor: chartColors.red,
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: chartColors.gridColor } },
+                    x: { grid: { color: chartColors.gridColor } }
+                },
+                plugins: {
+                    legend: { labels: { usePointStyle: true, pointStyleWidth: 12 } }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
+    }
+
+    function renderActionTypeChart() {
+        const ctx = document.getElementById('actionTypeChart').getContext('2d');
+        if (charts.actionType) charts.actionType.destroy();
+
+        // Aggregate action types from employee data
+        const types = ['Login', 'Logout', 'File Access', 'Download', 'Sensitive'];
+        const counts = [15, 10, 40, 25, 10]; // Approximate from seed data ratios
+
+        charts.actionType = new Chart(ctx, {
+            type: 'polarArea',
+            data: {
+                labels: types,
+                datasets: [{
+                    data: counts,
+                    backgroundColor: [
+                        chartColors.cyanBg,
+                        chartColors.purpleBg,
+                        chartColors.greenBg,
+                        chartColors.amberBg,
+                        chartColors.redBg
+                    ],
+                    borderColor: [
+                        chartColors.cyan,
+                        chartColors.purple,
+                        chartColors.green,
+                        chartColors.amber,
+                        chartColors.red
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 15, pointStyleWidth: 12 }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderRiskTrendChart() {
+        const ctx = document.getElementById('riskTrendChart').getContext('2d');
+        if (charts.riskTrend) charts.riskTrend.destroy();
+
+        // Simulated trend data
+        const labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'];
+        const avgRisk = dashboardData ? dashboardData.average_risk : 30;
+        const trendData = labels.map((_, i) => Math.max(5, avgRisk + (Math.random() - 0.5) * 20));
+
+        charts.riskTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Avg Risk Score',
+                    data: trendData,
+                    borderColor: chartColors.purple,
+                    backgroundColor: chartColors.purpleBg,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: chartColors.purple
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: chartColors.gridColor } },
+                    x: { grid: { display: false } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // ─── Alerts ─────────────────────────────────────────────────────────────
+    function loadAlerts() {
+        fetch('/api/admin/alerts')
+            .then(res => res.json())
+            .then(alerts => {
+                const list = document.getElementById('alerts-list');
+                if (alerts.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔔</div><p>No alerts at this time. System running normally.</p></div>';
+                    return;
+                }
+
+                list.innerHTML = alerts.map(a => `
+                <div class="alert-card severity-${a.severity} ${a.is_acknowledged ? 'acknowledged' : ''}">
+                    <div class="alert-severity-bar"></div>
+                    <div class="alert-content">
+                        <div class="alert-top">
+                            <span class="alert-severity-tag">${a.severity.toUpperCase()}</span>
+                            <span class="alert-time">${new Date(a.created_at).toLocaleString()}</span>
+                        </div>
+                        <h4 class="alert-title">${a.title}</h4>
+                        <p class="alert-desc">${a.description}</p>
+                        <div class="alert-footer">
+                            <span class="alert-employee">👤 ${a.employee_name}</span>
+                            <span class="alert-risk">Risk: ${a.risk_score}%</span>
+                            ${!a.is_acknowledged ? `<button class="ack-btn" onclick="acknowledgeAlert(${a.id})">Acknowledge</button>` : '<span class="ack-status">✓ Acknowledged</span>'}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            });
+    }
+
+    function acknowledgeAlert(alertId) {
+        fetch(`/api/admin/acknowledge_alert/${alertId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('✅ Alert acknowledged', 'success');
+                    loadAlerts();
+                    loadDashboard();
+                }
+            });
+    }
+
+    // ─── Employees ──────────────────────────────────────────────────────────
+    function loadEmployeeCards() {
+        if (!dashboardData) return;
+
+        const container = document.getElementById('employee-cards');
+        container.innerHTML = dashboardData.employee_risks.map(e => `
+            <div class="emp-card risk-border-${e.risk_level}">
+                <div class="emp-card-header">
+                    <div class="emp-avatar">${e.employee.full_name[0]}</div>
+                    <div class="emp-info">
+                        <h4>${e.employee.full_name}</h4>
+                        <span>${e.employee.department} · ${e.employee.role}</span>
+                    </div>
+                    <span class="level-badge level-${e.risk_level}">${e.risk_level.toUpperCase()}</span>
+                </div>
+                <div class="emp-card-body">
+                    <div class="emp-risk-display">
+                        <div class="risk-gauge">
+                            <svg viewBox="0 0 120 120" class="gauge-svg">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(148,163,184,0.1)" stroke-width="10"/>
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="${getRiskColor(e.risk_level)}" stroke-width="10" 
+                                    stroke-dasharray="${e.risk_percentage * 3.14} 314" stroke-dashoffset="0" stroke-linecap="round"
+                                    transform="rotate(-90 60 60)" class="gauge-progress"/>
+                            </svg>
+                            <div class="gauge-value">${e.risk_percentage}%</div>
+                        </div>
+                    </div>
+                    <div class="emp-details-grid">
+                        <div class="emp-detail">
+                            <span class="detail-label">Employee ID</span>
+                            <span class="detail-value">${e.employee.employee_id}</span>
+                        </div>
+                        <div class="emp-detail">
+                            <span class="detail-label">Clearance</span>
+                            <span class="detail-value">${e.employee.clearance_level}</span>
+                        </div>
+                        <div class="emp-detail">
+                            <span class="detail-label">Classification</span>
+                            <span class="detail-value classification-${e.classification.toLowerCase()}">${e.classification}</span>
+                        </div>
+                        <div class="emp-detail">
+                            <span class="detail-label">Last Login</span>
+                            <span class="detail-value">${e.employee.last_login ? new Date(e.employee.last_login).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getRiskColor(level) {
+        return level === 'high' ? '#ef4444' : level === 'medium' ? '#f59e0b' : '#22c55e';
+    }
+
+    // ─── Reports ────────────────────────────────────────────────────────────
+    function loadReports() {
+        fetch('/api/admin/reports')
+            .then(res => res.json())
+            .then(reports => {
+                const list = document.getElementById('reports-list');
+                if (reports.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No reports generated yet. Click "Generate Report" to create one.</p></div>';
+                    return;
+                }
+
+                list.innerHTML = reports.map(r => `
+                <div class="report-card">
+                    <div class="report-icon">📊</div>
+                    <div class="report-content">
+                        <h4>${r.title}</h4>
+                        <p>${r.summary}</p>
+                        <div class="report-stats">
+                            <span class="r-stat">📋 ${r.total_activities} activities</span>
+                            <span class="r-stat">🔍 ${r.total_threats} threats</span>
+                            <span class="r-stat">🔔 ${r.total_alerts} alerts</span>
+                            <span class="r-stat r-high">🔴 ${r.high_risk_count} high</span>
+                            <span class="r-stat r-medium">🟡 ${r.medium_risk_count} medium</span>
+                            <span class="r-stat r-low">🟢 ${r.low_risk_count} low</span>
+                        </div>
+                    </div>
+                    <div class="report-time">${new Date(r.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+            });
+    }
+
+    function generateReport() {
+        fetch('/api/admin/generate_report', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('📊 Report generated successfully', 'success');
+                    loadReports();
+                }
+            });
+    }
+
+    // ─── Analysis ───────────────────────────────────────────────────────────
+    function runAnalysis() {
+        const btn = document.getElementById('run-analysis-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="btn-loader"></span> Analyzing...';
+
+        fetch('/api/admin/run_analysis', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                showToast(`🔍 Analysis complete: ${data.results_count} employees assessed`, 'success');
+                loadDashboard();
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Run Analysis`;
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Run Analysis`;
+                showToast('❌ Analysis failed', 'error');
+            });
+    }
+
+    // ─── Toast ──────────────────────────────────────────────────────────────
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<span>${message}</span>`;
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // ─── Init ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    });
+</script>
+{% endblock %}
